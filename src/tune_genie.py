@@ -24,7 +24,6 @@ def get_song_data(start_time, sleep_duration=SLEEP_DURATION_DEFAULT):
     if not response.ok:
         raise IOError(
             f"Could not make request for {start_time} due to {response.reason}",
-            file=sys.stderr
         )
 
     payload = response.json()
