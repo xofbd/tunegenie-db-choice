@@ -1,0 +1,2 @@
+DATABASE = "theFox"
+COLLECTION = "songs"
