@@ -1,0 +1,7 @@
+sid
+artist
+sslg
+song
+songlink
+videolink
+albumslink
