@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
-
-from sqlalchemy import create_engine
+import sqlite3
 
 URL_DB = os.getenv("URL_DB")
 
@@ -48,8 +47,8 @@ def create_plays(conn):
 
 
 def main():
-    engine = create_engine(URL_DB)
-    with engine.connect() as conn:
+    conn = sqlite3.connect(URL_DB)
+    with conn:
         create_songs(conn)
         create_artists(conn)
         create_plays(conn)
