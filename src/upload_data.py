@@ -39,29 +39,6 @@ def parse_data(data, table):
 def insert_records(records):
     conn = sqlite3.connect(URL_DB)
     cursor = conn.cursor()
-    try:
-        cursor.executemany(
-            """
-            INSERT INTO songs
-            (sid, artist, sslg, song, songlink, videolink, albumslink)
-            VALUES(?, ?, ?, ?, ?, ?, ?)
-            """,
-            records["songs"]
-        )
-    except sqlite3.IntegrityError:
-        pass
-
-    try:
-        cursor.executemany(
-            """
-            INSERT INTO artists
-            (aslg, artist, artistlink, concertslink, topttrackslink, campaignlink)
-            VALUES(?, ?, ?, ?, ?, ?)
-            """,
-            records["artists"],
-        )
-    except sqlite3.IntegrityError:
-        pass
 
     cursor.executemany(
         """
@@ -71,6 +48,32 @@ def insert_records(records):
          """,
         records["plays"],
     )
+
+    for record in records["songs"]:
+        try:
+            cursor.execute(
+                """
+                INSERT INTO songs
+                (sid, artist, sslg, song, songlink, videolink, albumslink)
+                VALUES(?, ?, ?, ?, ?, ?, ?)
+                """,
+                record,
+            )
+        except sqlite3.IntegrityError:
+            pass
+
+    for record in records["artists"]:
+        try:
+            cursor.execute(
+                """
+                INSERT INTO artists
+                (aslg, artist, artistlink, concertslink, topttrackslink, campaignlink)
+                VALUES(?, ?, ?, ?, ?, ?)
+                """,
+                record,
+            )
+        except sqlite3.IntegrityError:
+            pass
 
     conn.commit()
     conn.close()
