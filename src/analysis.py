@@ -40,7 +40,7 @@ def calc_top_songs(collection, N):
         },
     ])
 
-    print(f"\n{N} most played songs")
+    print(f"\nTop {N} most played songs")
     for doc in cursor:
         print(f"{doc['_id']['song']} ({doc['_id']['artist']}): {doc['count']}")
 
@@ -53,7 +53,7 @@ def calc_top_artists(collection, N):
         {"$limit": N},
     ])
 
-    print(f"\n{N} most artists with most plays")
+    print(f"\nTop {N} artists with most plays")
     for doc in cursor:
         print(f"{doc['_id']}: {doc['count']}")
 
@@ -78,7 +78,7 @@ def calc_most_distinct_songs(collection, N):
         },
     ])
 
-    print(f"\n{N} artists with most distinct songs")
+    print(f"\nTop {N} artists with most distinct songs")
     for doc in cursor:
         print(f"{doc['_id']}: {doc['total']}")
 
