@@ -86,7 +86,7 @@ def calc_most_distinct_songs(collection, N):
 def main():
     client = connect_to_db()
     collection = client[DATABASE][COLLECTION]
-    N = 20
+    N = 10
 
     num_plays = calc_number_of_plays(collection)
     num_songs = calc_unique_songs(collection)
