@@ -92,7 +92,6 @@ def main():
     num_songs = calc_unique_songs(collection)
     avg_plays = calc_average_song_play(num_plays, num_songs)
 
-    print(f"Number of songs played: {num_plays}")
     print(f"Number of distinct songs played: {num_songs}")
     print(f"Number of plays per song: {avg_plays :0.2f}")
     calc_top_songs(collection, N)
