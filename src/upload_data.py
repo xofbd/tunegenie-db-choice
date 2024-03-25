@@ -4,6 +4,8 @@ from pathlib import Path
 import sqlite3
 
 from dotenv import load_dotenv
+import pandas as pd
+from sqlalchemy import create_engine, insert
 
 from tune_genie import get_song_data
 
@@ -11,78 +13,41 @@ load_dotenv()
 URL_DB = os.getenv("URL_DB")
 
 
-def create_records(payload):
-    records_songs = []
-    records_artists = []
-    records_plays = []
+def create_dfs(payload):
+    """Return data frames for each table given the payload from the API"""
+    df = pd.DataFrame(payload)
+    dfs = []
+    tables = ("plays", "songs", "artists")
+    unique_fields = {"songs": "sid", "artists": "artist"}
 
-    for data in payload:
-        records_songs.append(parse_data(data, "songs"))
-        records_artists.append(parse_data(data, "artists"))
-        records_plays.append(parse_data(data, "plays"))
+    for table in tables:
+        with (Path("sql") / f"{table}-fields.txt").open("r") as f:
+            fields = [line.strip() for line in f]
+        dfs.append(df[fields].drop_duplicates(subset=unique_fields.get(table)))
 
-    return {
-        "songs": records_songs,
-        "artists": records_artists,
-        "plays": records_plays,
-    }
+    return zip(tables, dfs)
 
 
-def parse_data(data, table):
-    records = []
-    with (Path("sql") / f"{table}-fields.txt").open("r") as f:
-        fields = [line.strip() for line in f]
-
-    return tuple((data[field] for field in fields))
-
-
-def insert_records(records):
-    conn = sqlite3.connect(URL_DB)
-    cursor = conn.cursor()
-
-    cursor.executemany(
-        """
-        INSERT INTO plays
-        (sid, played_at, played_at_display)
-        VALUES (?, ?, ?)
-         """,
-        records["plays"],
-    )
-
-    for record in records["songs"]:
-        try:
-            cursor.execute(
-                """
-                INSERT INTO songs
-                (sid, artist, sslg, song, songlink, videolink, albumslink)
-                VALUES(?, ?, ?, ?, ?, ?, ?)
-                """,
-                record,
-            )
-        except sqlite3.IntegrityError:
-            pass
-
-    for record in records["artists"]:
-        try:
-            cursor.execute(
-                """
-                INSERT INTO artists
-                (aslg, artist, artistlink, concertslink, topttrackslink, campaignlink)
-                VALUES(?, ?, ?, ?, ?, ?)
-                """,
-                record,
-            )
-        except sqlite3.IntegrityError:
-            pass
-
-    conn.commit()
-    conn.close()
-
+def insert_records(df, table, conn):
+    """Insert records from data frame into the database"""
+    if table == "plays":
+        df.to_sql(table, conn, if_exists="append", index=False)
+    else:
+        # Writing each row individually to be able to catch integrity violations.
+        # There might be a better way to do this.
+        rows = (pd.DataFrame([row]) for row in df.itertuples(index=False))
+        for row in rows:
+            try:
+                row.to_sql(table, conn, if_exists="append", index=False)
+            except sqlite3.IntegrityError:
+                pass
 
 def main(date):
+    conn = sqlite3.connect(URL_DB)
     payload = get_song_data(datetime.strptime(date, "%Y-%m-%d"))
-    records = create_records(payload)
-    insert_records(records)
+    dfs = create_dfs(payload)
+    for table, df in dfs:
+        insert_records(df, table, conn)
 
 
 if __name__ == "__main__":
